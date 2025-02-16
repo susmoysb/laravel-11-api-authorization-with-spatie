@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
-abstract class Controller
+use App\Classes\BaseClass;
+
+abstract class Controller extends BaseClass
 {
     //
 }
