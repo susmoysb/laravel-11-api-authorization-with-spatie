@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Classes\BaseClass;
 use App\Models\User;
 use DateTimeInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,18 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 class PersonalAccessTokenService extends BaseClass
 {
+    /**
+     * Retrieve all personal access tokens for the authenticated user.
+     *
+     * @param \Illuminate\Http\Request $request The current HTTP request instance.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection The collection of personal access tokens.
+     */
+    public function index(Request $request): Collection
+    {
+        return $request->user()->tokens()->orderByDesc('id')->get();
+    }
+
     /**
      * Generate a new personal access token for the given user.
      *
