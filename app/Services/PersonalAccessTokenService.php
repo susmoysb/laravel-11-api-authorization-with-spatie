@@ -2,12 +2,15 @@
 
 namespace App\Services;
 
+use App\Classes\BaseClass;
 use App\Models\User;
 use DateTimeInterface;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Laravel\Sanctum\PersonalAccessToken;
 
-class PersonalAccessTokenService
+class PersonalAccessTokenService extends BaseClass
 {
     /**
      * Generate a new personal access token for the given user.
@@ -36,5 +39,32 @@ class PersonalAccessTokenService
 
         // Return the generated token
         return $token;
+    }
+
+    /**
+     * Delete a personal access token.
+     *
+     * If no token ID is provided, the current session's access token will be deleted.
+     * If a token ID is provided, the token will be found and deleted if it belongs to the authenticated user.
+     *
+     * @param \Illuminate\Http\Request $request The current HTTP request instance.
+     * @param int|null $tokenId The ID of the token to delete, or null to delete the current token.
+     *
+     * @return bool|null True if the token was successfully deleted, false if the token was not found or does not belong to the user, null if the current session's token was deleted.
+     */
+    public function delete(Request $request, int $tokenId = null): bool
+    {
+        if (!$tokenId) {
+            // Logout current session
+            return $request->user()->currentAccessToken()->delete();
+        }
+
+        // Find token by ID
+        $token = PersonalAccessToken::find($tokenId);
+        if ($token && $token->tokenable_id === $request->user()->id) {
+            return $token->delete();
+        }
+
+        throw new HttpResponseException(self::withNotFound(self::MESSAGES['token_not_found']));
     }
 }

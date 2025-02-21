@@ -119,4 +119,24 @@ class AuthController extends Controller
 
         return self::withUnauthorized(self::MESSAGES['invalid_credentials']);
     }
+
+    /**
+     * Logout the authenticated user by deleting their personal access token.
+     *
+     * If tokenId is null, deletes the current session.
+     * If tokenId is provided, deletes the specified session.
+     *
+     * @param \Illuminate\Http\Request $request The current request instance.
+     *
+     * @param int|null $tokenId The ID of the token to delete, or null to delete the current token.
+     *
+     * @return \Illuminate\Http\JsonResponse A JSON response indicating the result of the logout operation.
+     */
+    public function logout(Request $request, int $tokenId = null): JsonResponse
+    {
+        if ($this->personalAccessTokenService->delete($request, $tokenId)) {
+            return self::withOk(self::MESSAGES['logout']);
+        }
+        return self::withBadRequest(self::MESSAGES['system_error']);
+    }
 }
