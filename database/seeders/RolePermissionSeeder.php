@@ -34,7 +34,7 @@ class RolePermissionSeeder extends Seeder
         }
 
         // assign permissions to roles
-        $superAdminRole->syncPermissions(BaseClass::PERMISSIONS); // assign all permissions to super admin role
+        // $superAdminRole->syncPermissions(BaseClass::PERMISSIONS); // assign all permissions to super admin role
         $adminRole->syncPermissions(BaseClass::PERMISSIONS['user']); // assign user permissions to admin role
         $userRole->syncPermissions(BaseClass::PERMISSIONS['own_profile']); // assign own profile permissions to user role
 
