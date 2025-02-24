@@ -8,6 +8,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Spatie\Permission\Exceptions\UnauthorizedException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -20,6 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append([
             EnsureTokenIsValid::class
         ]);
+        $middleware->alias([
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (Exception $exception, Request $request) {
@@ -27,6 +33,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 if ($exception instanceof ValidationException) {
                     return ApiResponse::withUnprocessableContent(BaseClass::MESSAGES['validation_error'], $exception->validator->errors());
+                }
+
+                if ($exception instanceof UnauthorizedException) {
+                    return ApiResponse::withForbidden(BaseClass::MESSAGES['no_permission']);
                 }
 
                 return ApiResponse::withInternalServerError($exception->getMessage(), get_class($exception));
