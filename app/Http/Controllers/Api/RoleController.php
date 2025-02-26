@@ -63,7 +63,7 @@ class RoleController extends Controller implements HasMiddleware
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'min:2', 'max:255', 'unique:roles,name'],
-            'permission_ids' => ['array', 'exists:permissions,id'],
+            'permission_ids' => ['present', 'array', 'exists:permissions,id'],
         ]);
 
         $validatedData = $validator->validated();
@@ -116,7 +116,7 @@ class RoleController extends Controller implements HasMiddleware
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'min:2', 'max:255', 'unique:roles,name,' . $role->id],
-            'permission_ids' => ['array', 'exists:permissions,id'],
+            'permission_ids' => ['present', 'array', 'exists:permissions,id'],
         ]);
 
         $validatedData = $validator->validated();
@@ -177,12 +177,12 @@ class RoleController extends Controller implements HasMiddleware
         }
 
         $validator = Validator::make($request->all(), [
-            'role_ids' => ['array', 'exists:roles,id'],
+            'role_ids' => ['present', 'array', 'exists:roles,id'],
         ]);
         $validatedData = $validator->validated();
 
         try {
-            $user->syncRoles($validatedData['role_ids'] ?? []);
+            $user->syncRoles($validatedData['role_ids']);
             return self::withOk('Roles ' . self::MESSAGES['assign']);
         } catch (Exception $e) {
             return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
