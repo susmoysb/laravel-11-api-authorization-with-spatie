@@ -27,6 +27,8 @@ class RoleController extends Controller implements HasMiddleware
         return [
             new Middleware('permission:' . self::PERMISSIONS['role']['read'], only: ['index', 'show']),
             new Middleware(['permission:' . self::PERMISSIONS['role']['create'], 'permission:' . self::PERMISSIONS['permission']['assign_to_role']], only: ['store']),
+            new Middleware(['permission:' . self::PERMISSIONS['role']['update'], 'permission:' . self::PERMISSIONS['permission']['assign_to_role']], only: ['update']),
+            new Middleware('permission:' . self::PERMISSIONS['role']['delete'], only: ['destroy']),
         ];
     }
 
@@ -69,7 +71,7 @@ class RoleController extends Controller implements HasMiddleware
         try {
             DB::beginTransaction();
             $role = Role::create($validatedData);
-            $role->syncPermissions($request->input('permission_ids'));
+            $role->syncPermissions($validatedData['permission_ids']);
             DB::commit();
 
             return self::withCreated('Role ' . self::MESSAGES['store'], $role);
@@ -91,5 +93,64 @@ class RoleController extends Controller implements HasMiddleware
         $role->load('permissions')->loadCount(['permissions', 'users']);
 
         return self::withOk('Role ' . self::MESSAGES['retrieve'], $role);
+    }
+
+    /**
+     * Update role and assign permissions.
+     *
+     * Uses Route Model Binding to retrieve the role instance. if the role is not found, it returns a not found response.
+     * Validates the request (role name and permission_ids), updates the role, syncs the provided permissions
+     * All operations are wrapped in a DB transaction for data consistency.
+     *
+     * @param \Illuminate\Http\Request $request The request instance containing the input data.
+     * @param \Spatie\Permission\Models\Role $role The role instance to be updated.
+     *
+     * @return \Illuminate\Http\JsonResponse The JSON response indicating the result of the update operation.
+     *
+     * @throws \Illuminate\Validation\ValidationException If the validation fails.
+     * @throws \Exception If there is an error during the role creation process.
+     */
+    public function update(Request $request, Role $role): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => ['required', 'string', 'min:2', 'max:255', 'unique:roles,name,' . $role->id],
+            'permission_ids' => ['array', 'exists:permissions,id'],
+        ]);
+
+        $validatedData = $validator->validated();
+        unset($validatedData['permission_id']);
+
+        try {
+            DB::beginTransaction();
+            $role->update($validatedData);
+            $role->syncPermissions($validatedData['permission_ids']);
+            DB::commit();
+
+            return self::withOk('Role ' . self::MESSAGES['update'], $role);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
+        }
+    }
+
+    /**
+     * Remove the specified role from storage.
+     *
+     * Uses Route Model Binding to retrieve the role instance. if the role is not found, it returns a not found response.
+     *
+     * @param  \Spatie\Permission\Models\Role  $role The role instance to be deleted.
+     *
+     * @return \Illuminate\Http\JsonResponse The JSON response indicating the result of the delete operation.
+     *
+     * @throws \Exception If there is an error during the role deletion process.
+     */
+    public function destroy(Role $role): JsonResponse
+    {
+        try {
+            $role->delete();
+            return self::withOk('Role ' . self::MESSAGES['delete']);
+        } catch (Exception $e) {
+            return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
+        }
     }
 }
