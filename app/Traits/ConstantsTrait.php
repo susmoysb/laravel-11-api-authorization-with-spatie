@@ -17,6 +17,7 @@ trait ConstantsTrait
         'not_found'           => 'not found.',
         'token_not_found'     => 'Token not found or does not belong to the authenticated user.',
         'retrieve'            => 'retrieved successfully.',
+        'assign'              => 'assigned successfully.',
         'no_permission'       => 'You do not have any permission to perform this action.',
     ];
 

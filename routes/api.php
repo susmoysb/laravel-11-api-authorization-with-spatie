@@ -16,4 +16,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::apiResource('roles', RoleController::class);
+    Route::post('roles/assign-to-user/{user}', [RoleController::class, 'assignToUser']);
 });

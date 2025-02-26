@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,6 +30,7 @@ class RoleController extends Controller implements HasMiddleware
             new Middleware(['permission:' . self::PERMISSIONS['role']['create'], 'permission:' . self::PERMISSIONS['permission']['assign_to_role']], only: ['store']),
             new Middleware(['permission:' . self::PERMISSIONS['role']['update'], 'permission:' . self::PERMISSIONS['permission']['assign_to_role']], only: ['update']),
             new Middleware('permission:' . self::PERMISSIONS['role']['delete'], only: ['destroy']),
+            new Middleware('permission:' . self::PERMISSIONS['role']['assign_to_user'], only: ['assignToUser']),
         ];
     }
 
@@ -149,6 +151,39 @@ class RoleController extends Controller implements HasMiddleware
         try {
             $role->delete();
             return self::withOk('Role ' . self::MESSAGES['delete']);
+        } catch (Exception $e) {
+            return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
+        }
+    }
+
+    /**
+     * Assign roles to the specified user.
+     *
+     * Uses Route Model Binding to retrieve the user instance. if the user is not found, it returns a not found response.
+     * Validates the request (role_ids), syncs the provided roles to the user
+     *
+     * @param \Illuminate\Http\Request $request The request instance containing the role_ids.
+     * @param \App\Models\User $user The user instance to which the roles are to be assigned.
+     *
+     * @return \Illuminate\Http\JsonResponse The JSON response indicating the result of the assign operation.
+     *
+     * @throws \Illuminate\Validation\ValidationException If the validation fails.
+     * @throws \Exception If there is an error during the role assignment process.
+     */
+    public function assignToUser(Request $request, User $user): JsonResponse
+    {
+        if ($request->user()->id == $user->id) {
+            return self::withForbidden(self::MESSAGES['no_permission']);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'role_ids' => ['array', 'exists:roles,id'],
+        ]);
+        $validatedData = $validator->validated();
+
+        try {
+            $user->syncRoles($validatedData['role_ids'] ?? []);
+            return self::withOk('Roles ' . self::MESSAGES['assign']);
         } catch (Exception $e) {
             return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
         }
