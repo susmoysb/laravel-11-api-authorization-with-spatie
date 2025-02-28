@@ -28,6 +28,7 @@ class UserController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('permission:' . self::PERMISSIONS['user']['read'], only: ['index', 'show']),
+            new Middleware('permission:' . self::PERMISSIONS['user']['create'], only: ['store']),
         ];
     }
 
@@ -53,6 +54,39 @@ class UserController extends Controller implements HasMiddleware
             $users->where('status', $validatedData['status']);
         }
         return self::withOk('Users ' . self::MESSAGES['retrieve'], $users->get());
+    }
+
+    /**
+     * Store a newly created user in storage.
+     *
+     * This method handles the creation of a new user and stores it in the database.
+     * It validates the incoming request data and returns a JSON response.
+     *
+     * @param  \Illuminate\Http\Request  $request  The incoming request containing user data.
+     *
+     * @return \Illuminate\Http\JsonResponse  A JSON response indicating the result of the operation.
+     *
+     * @throws \Illuminate\Validation\ValidationException  If the request data fails validation.
+     * @throws \Exception  If an error occurs during the user creation process.
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'name'        => ['required', 'string', 'min:2', 'max:255'],
+            'username'    => ['required', 'string', 'min:2', 'max:30', Rule::unique('users')],
+            'employee_id' => ['required', 'string', 'min:2', 'max:30', Rule::unique('users')],
+            'email'       => ['required', 'string', 'email', 'max:255', Rule::unique('users')],
+            'password'    => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $validatedData = $validator->validated();
+
+        try {
+            $user = User::create($validatedData);
+            return self::withCreated('User ' . self::MESSAGES['store'], $user);
+        } catch (Exception $e) {
+            return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
+        }
     }
 
     /**
