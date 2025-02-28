@@ -1,0 +1,73 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Exception;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+
+class UserController extends Controller implements HasMiddleware
+{
+    /**
+     * Define the middleware for the UserController.
+     *
+     * This method returns an array of middleware that will be applied to the controller's methods.
+     * The middleware ensures that the user has the necessary permissions to access the specified actions.
+     *
+     * @return array The array of middleware instances.
+     */
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:' . self::PERMISSIONS['user']['read'], only: ['index', 'show']),
+        ];
+    }
+
+    /**
+     * Display a listing of the users.
+     *
+     * This method retrieves all users
+     *
+     * @param \Illuminate\Http\Request $request The incoming request instance.
+     *
+     * @return \Illuminate\Http\JsonResponse The response containing the list of users
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'status' => ['boolean'],
+        ]);
+
+        $validatedData = $validator->validated();
+
+        $users = User::query();
+        if (isset($validatedData['status'])) {
+            $users->where('status', $validatedData['status']);
+        }
+        return self::withOk('Users ' . self::MESSAGES['retrieve'], $users->get());
+    }
+
+    /**
+     * Display the specified user.
+     *
+     * Uses Route Model Binding to retrieve the user instance. if the user is not found, it returns a not found response.
+     *
+     * @param \Illuminate\Http\Request $request The incoming request instance.
+     * @param string $id The ID of the user to retrieve.
+     *
+     * @return \Illuminate\Http\JsonResponse The response containing the user data or an error message.
+     */
+    public function show(User $user): JsonResponse
+    {
+        return self::withOk('User ' . self::MESSAGES['retrieve'], $user);
+    }
+
+}
