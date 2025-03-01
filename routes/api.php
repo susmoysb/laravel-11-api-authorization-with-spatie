@@ -13,7 +13,7 @@ Route::controller(AuthController::class)->group(function () {
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::controller(AuthController::class)->group(function () {
-        Route::get('login-sessions', 'loginSessions');
+        Route::get('login-sessions/{user?}', 'loginSessions');
         Route::post('logout/{tokenId?}', 'logout')->where('tokenId', '[0-9]+');
     });
 

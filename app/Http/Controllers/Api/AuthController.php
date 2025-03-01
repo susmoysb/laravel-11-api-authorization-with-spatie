@@ -122,17 +122,23 @@ class AuthController extends Controller
 
     /**
      * Get the login sessions for the authenticated user.
+     * If a user is provided, retrieves the login sessions for that user.
      *
-     * This method retrieves all active personal access tokens for the authenticated user.
+     * This method retrieves all active personal access tokens for the authenticated user or the specified user.
      * It returns the token details including the creation time, expire time and last used time.
      *
      * @param \Illuminate\Http\Request $request The current request instance.
      *
      * @return \Illuminate\Http\JsonResponse The response containing the list of active login sessions.
      */
-    public function loginSessions(Request $request): JsonResponse
+    public function loginSessions(Request $request, ?User $user = null): JsonResponse
     {
-        $tokens = $this->personalAccessTokenService->index($request);
+        $authenticatedUser = $request->user();
+        if ((!$user && !$authenticatedUser->can(self::PERMISSIONS['own_profile']['session_read'])) || ($user && !$authenticatedUser->can(self::PERMISSIONS['user']['session_read']))) {
+            return self::withUnauthorized(self::MESSAGES['no_permission']);
+        }
+
+        $tokens = $this->personalAccessTokenService->index($user ?? $authenticatedUser);
 
         return self::withOk('Active login sessions ' . self::MESSAGES['retrieve'], $tokens);
     }
@@ -149,7 +155,7 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse A JSON response indicating the result of the logout operation.
      */
-    public function logout(Request $request, int $tokenId = null): JsonResponse
+    public function logout(Request $request, ?int $tokenId = null): JsonResponse
     {
         if ($this->personalAccessTokenService->delete($request, $tokenId)) {
             return self::withOk(self::MESSAGES['logout']);

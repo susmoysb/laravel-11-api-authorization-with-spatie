@@ -20,9 +20,9 @@ class PersonalAccessTokenService extends BaseClass
      *
      * @return \Illuminate\Database\Eloquent\Collection The collection of personal access tokens.
      */
-    public function index(Request $request): Collection
+    public function index(User $user): Collection
     {
-        return $request->user()->tokens()->orderByDesc('id')->get();
+        return $user->tokens()->orderByDesc('id')->get();
     }
 
     /**
