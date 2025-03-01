@@ -25,5 +25,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('assign-to-user/{user}', 'assignToUser');
     });
 
+    Route::controller(UserController::class)->prefix('users')->group(function () {
+        Route::get('/me', 'me');
+        Route::patch('/change-password', 'changePassword');
+    });
     Route::apiResource('users', UserController::class);
 });

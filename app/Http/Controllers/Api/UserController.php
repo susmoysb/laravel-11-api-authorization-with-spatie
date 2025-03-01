@@ -29,6 +29,8 @@ class UserController extends Controller implements HasMiddleware
         return [
             new Middleware('permission:' . self::PERMISSIONS['user']['read'], only: ['index', 'show']),
             new Middleware('permission:' . self::PERMISSIONS['user']['create'], only: ['store']),
+            new Middleware('permission:' . self::PERMISSIONS['own_profile']['read'], only: ['me']),
+            new Middleware('permission:' . self::PERMISSIONS['own_profile']['password_change'], only: ['changePassword']),
         ];
     }
 
@@ -104,4 +106,50 @@ class UserController extends Controller implements HasMiddleware
         return self::withOk('User ' . self::MESSAGES['retrieve'], $user);
     }
 
+    /**
+     * Retrieve the authenticated user's information.
+     *
+     * @param \Illuminate\Http\Request $request The current request instance.
+     *
+     * @return \Illuminate\Http\JsonResponse The JSON response containing the authenticated user's information.
+     */
+    public function me(Request $request): JsonResponse
+    {
+        return self::withOk('Authenticated user ' . self::MESSAGES['retrieve'], $request->user());
+    }
+
+    /**
+     * Update the authenticated user's password.
+     *
+     * This method handles the request to change the authenticated user's password.
+     * It validates the incoming request data and returns a JSON response.
+     *
+     * @param \Illuminate\Http\Request $request The incoming request containing the new password.
+     *
+     * @return \Illuminate\Http\JsonResponse A JSON response indicating the result of the operation.
+     *
+     * @throws \Illuminate\Validation\ValidationException If the request data fails validation.
+     * @throws \Exception If an error occurs during the password change process.
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'current_password' => ['required', 'string'],
+            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $validatedData = $validator->validated();
+
+        $user = $request->user();
+        if (!Hash::check($validatedData['current_password'], $user->password)) {
+            return self::withUnauthorized(self::MESSAGES['invalid_credentials']);
+        }
+
+        try {
+            $user->update(['password' => Hash::make($validatedData['new_password'])]);
+            return self::withOk('Password ' . self::MESSAGES['update']);
+        } catch (Exception $e) {
+            return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
+        }
+    }
 }
