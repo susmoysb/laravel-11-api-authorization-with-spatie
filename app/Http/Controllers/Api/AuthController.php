@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -134,8 +135,9 @@ class AuthController extends Controller
     public function loginSessions(Request $request, ?User $user = null): JsonResponse
     {
         $authenticatedUser = $request->user();
-        if ((!$user && !$authenticatedUser->can(self::PERMISSIONS['own_profile']['session_read'])) || ($user && !$authenticatedUser->can(self::PERMISSIONS['user']['session_read']))) {
-            return self::withUnauthorized(self::MESSAGES['no_permission']);
+        $permissionKey = $user ? 'user' : 'own_profile';
+        if (!$authenticatedUser->can(self::PERMISSIONS[$permissionKey]['session_read'])) {
+            return self::withForbidden(self::MESSAGES['no_permission']);
         }
 
         $tokens = $this->personalAccessTokenService->index($user ?? $authenticatedUser);
@@ -155,11 +157,23 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse A JSON response indicating the result of the logout operation.
      */
-    public function logout(Request $request, ?int $tokenId = null): JsonResponse
+    public function logout(Request $request, ?PersonalAccessToken $token = null): JsonResponse
     {
-        if ($this->personalAccessTokenService->delete($request, $tokenId)) {
+        if ($this->personalAccessTokenService->delete($request, $token)) {
             return self::withOk(self::MESSAGES['logout']);
         }
         return self::withBadRequest(self::MESSAGES['system_error']);
+    }
+
+    public function deleteSession(Request $request, PersonalAccessToken $token)
+    {
+        $authenticatedUser = $request->user();
+        $permissionKey = $authenticatedUser->id === $token->tokenable_id ? 'own_profile' : 'user';
+
+        if (!$authenticatedUser->can(self::PERMISSIONS[$permissionKey]['session_delete'])) {
+            return self::withForbidden(self::MESSAGES['no_permission']);
+        }
+
+        return $this->logout($request, $token);
     }
 }

@@ -65,19 +65,8 @@ class PersonalAccessTokenService extends BaseClass
      *
      * @return bool|null True if the token was successfully deleted, false if the token was not found or does not belong to the user, null if the current session's token was deleted.
      */
-    public function delete(Request $request, int $tokenId = null): bool
+    public function delete(Request $request, ?PersonalAccessToken $token = null): bool
     {
-        if (!$tokenId) {
-            // Logout current session
-            return $request->user()->currentAccessToken()->delete();
-        }
-
-        // Find token by ID
-        $token = PersonalAccessToken::find($tokenId);
-        if ($token && $token->tokenable_id === $request->user()->id) {
-            return $token->delete();
-        }
-
-        throw new HttpResponseException(self::withNotFound(self::MESSAGES['token_not_found']));
+        return $token ? $token->delete() : $request->user()->currentAccessToken()->delete();
     }
 }
