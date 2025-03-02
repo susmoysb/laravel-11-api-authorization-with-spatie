@@ -121,6 +121,19 @@ class ApiResponse
     }
 
     /**
+     * 406 Not Acceptable
+     *
+     * @param string $message
+     * @param mixed $data
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public static function withNotAcceptable(string $message = null, $data = null): JsonResponse
+    {
+        return self::response('Not Acceptable', $data, $message, 406);
+    }
+
+    /**
      * 409 Conflict
      *
      * @param string $message
