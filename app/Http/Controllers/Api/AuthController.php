@@ -165,6 +165,18 @@ class AuthController extends Controller
         return self::withBadRequest(self::MESSAGES['system_error']);
     }
 
+    /**
+     * Delete a user session.
+     *
+     * This method deletes a user session based on the provided token. It first checks if the authenticated user
+     * has the necessary permissions to delete the session. If the user does not have the required permissions,
+     * a forbidden response is returned. If the user has the required permissions, the session is deleted.
+     *
+     * @param \Illuminate\Http\Request $request The current request instance.
+     * @param \Laravel\Sanctum\PersonalAccessToken $token The personal access token associated with the session to be deleted.
+     * 
+     * @return \Illuminate\Http\JsonResponse The response indicating the result of the session deletion.
+     */
     public function deleteSession(Request $request, PersonalAccessToken $token)
     {
         $authenticatedUser = $request->user();

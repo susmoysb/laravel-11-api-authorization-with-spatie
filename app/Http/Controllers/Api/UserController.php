@@ -107,6 +107,45 @@ class UserController extends Controller implements HasMiddleware
     }
 
     /**
+     * Update the specified user in storage.
+     *
+     * This method handles the request to update a user's profile. It validates the incoming request data and returns a JSON response.
+     * The authenticated user can update their own profile or other users' profiles based on their permissions.
+     *
+     * @param \Illuminate\Http\Request $request The incoming request containing the updated user data.
+     * @param \App\Models\User $user The user instance to update.
+     *
+     * @return \Illuminate\Http\JsonResponse A JSON response indicating the result of the operation.
+     *
+     * @throws \Illuminate\Validation\ValidationException If the request data fails validation.
+     * @throws \Exception If an error occurs during the user update process.
+     */
+    public function update(Request $request, User $user): JsonResponse
+    {
+        $authenticatedUser = $request->user();
+        $permissionKey = $authenticatedUser->id === $user->id ? 'own_profile' : 'user';
+        if (!$authenticatedUser->can(self::PERMISSIONS[$permissionKey]['update'])) {
+            return self::withForbidden(self::MESSAGES['no_permission']);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name'        => ['sometimes', 'required', 'string', 'min:2', 'max:255'],
+            'username'    => ['sometimes', 'required', 'string', 'min:2', 'max:30', Rule::unique('users')->ignore($user->id)],
+            'employee_id' => ['sometimes', 'required', 'string', 'min:2', 'max:30', Rule::unique('users')->ignore($user->id)],
+            'email'       => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+        ]);
+
+        $validatedData = $validator->validated();
+
+        try {
+            $user->update($validatedData);
+            return self::withOk('User ' . self::MESSAGES['update'], $user);
+        } catch (Exception $e) {
+            return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
+        }
+    }
+
+    /**
      * Retrieve the authenticated user's information.
      *
      * @param \Illuminate\Http\Request $request The current request instance.
