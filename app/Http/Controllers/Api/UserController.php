@@ -191,4 +191,33 @@ class UserController extends Controller implements HasMiddleware
             return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
         }
     }
+
+    /**
+     * Remove the specified user from storage.
+     *
+     * This method handles the request to delete a user from the database.
+     * Authenticated users can delete their own profile or other users' profiles based on their permissions.
+     * It returns a JSON response indicating the result of the operation.
+     *
+     * @param \App\Models\User $user The user instance to delete.
+     *
+     * @return \Illuminate\Http\JsonResponse A JSON response indicating the result of the operation.
+     *
+     * @throws \Exception If an error occurs during the user deletion process.
+     */
+    public function destroy(User $user): JsonResponse
+    {
+        $authenticatedUser = request()->user();
+        $permissionKey = $authenticatedUser->id === $user->id ? 'own_profile' : 'user';
+        if (!$authenticatedUser->can(self::PERMISSIONS[$permissionKey]['delete'])) {
+            return self::withForbidden(self::MESSAGES['no_permission']);
+        }
+
+        try {
+            $user->delete();
+            return self::withOk('User ' . self::MESSAGES['delete']);
+        } catch (Exception $e) {
+            return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
+        }
+    }
 }
