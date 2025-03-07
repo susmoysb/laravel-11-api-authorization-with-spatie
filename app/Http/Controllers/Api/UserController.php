@@ -195,7 +195,8 @@ class UserController extends Controller implements HasMiddleware
     /**
      * Remove the specified user from storage.
      *
-     * This method handles the request to delete a user from the database.
+     * This method handles the request to soft delete a user from the database.
+     * The soft delete process marks the user as deleted without removing the record from the database.
      * Authenticated users can delete their own profile or other users' profiles based on their permissions.
      * It returns a JSON response indicating the result of the operation.
      *
