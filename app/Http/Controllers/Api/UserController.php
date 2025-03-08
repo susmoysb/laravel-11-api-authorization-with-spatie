@@ -214,11 +214,10 @@ class UserController extends Controller implements HasMiddleware
             return self::withForbidden(self::MESSAGES['no_permission']);
         }
 
-        try {
-            $user->delete();
+        if (!$user->trashed() && $user->delete()) {
             return self::withOk('User ' . self::MESSAGES['delete']);
-        } catch (Exception $e) {
-            return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
         }
+
+        return self::withBadRequest(self::MESSAGES['system_error']);
     }
 }
