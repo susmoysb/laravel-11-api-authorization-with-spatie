@@ -9,7 +9,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -31,6 +30,7 @@ class UserController extends Controller implements HasMiddleware
             new Middleware('permission:' . self::PERMISSIONS['user']['create'], only: ['store']),
             new Middleware('permission:' . self::PERMISSIONS['own_profile']['read'], only: ['me']),
             new Middleware('permission:' . self::PERMISSIONS['own_profile']['password_change'], only: ['changePassword']),
+            new Middleware('permission:' . self::PERMISSIONS['user']['restore'], only: ['restore']),
         ];
     }
 
@@ -216,6 +216,28 @@ class UserController extends Controller implements HasMiddleware
 
         if (!$user->trashed() && $user->delete()) {
             return self::withOk('User ' . self::MESSAGES['delete']);
+        }
+
+        return self::withBadRequest(self::MESSAGES['system_error']);
+    }
+
+    /**
+     * Restore the specified user from storage.
+     *
+     * This method handles the request to restore a soft deleted user from the database.
+     * Authenticated users can restore other users' profiles based on their permissions.
+     * It returns a JSON response indicating the result of the operation.
+     *
+     * @param \App\Models\User $user The user instance to restore.
+     *
+     * @return \Illuminate\Http\JsonResponse A JSON response indicating the result of the operation.
+     *
+     * @throws \Exception If an error occurs during the user restoration process.
+     */
+    public function restore(User $user): JsonResponse
+    {
+        if ($user->trashed() && $user->restore()) {
+            return self::withOk('User ' . self::MESSAGES['restore']);
         }
 
         return self::withBadRequest(self::MESSAGES['system_error']);

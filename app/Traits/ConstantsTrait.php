@@ -11,6 +11,7 @@ trait ConstantsTrait
         'store'               => 'stored successfully.',
         'update'              => 'updated successfully.',
         'delete'              => 'deleted successfully.',
+        'restore'             => 'restored successfully.',
         'login'               => 'logged in successfully.',
         'logout'              => 'logged out successfully.',
         'invalid_credentials' => 'Invalid credentials.',
