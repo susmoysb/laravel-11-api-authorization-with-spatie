@@ -99,9 +99,13 @@ class AuthController extends Controller
         $login    = $validatedData['login'];
         $password = $validatedData['password'];
 
-        $user = User::where('username', $login)
-            ->orWhere('employee_id', $login)
-            ->orWhere('email', $login)
+        $user = User::where(function ($query) use ($login) {
+            $query->where('username', $login)
+                ->orWhere('employee_id', $login)
+                ->orWhere('email', $login);
+            })
+            ->where('status', 1)
+            // ->whereNull('deleted_at') // This is not necessary since the model uses the SoftDeletes trait
             ->first();
 
         if ($user && Hash::check($password, $user->password)) {
@@ -174,7 +178,7 @@ class AuthController extends Controller
      *
      * @param \Illuminate\Http\Request $request The current request instance.
      * @param \Laravel\Sanctum\PersonalAccessToken $token The personal access token associated with the session to be deleted.
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse The response indicating the result of the session deletion.
      */
     public function deleteSession(Request $request, PersonalAccessToken $token)
