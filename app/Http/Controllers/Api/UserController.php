@@ -283,10 +283,14 @@ class UserController extends Controller implements HasMiddleware
      */
     public function changeStatus(User $user): JsonResponse
     {
+        if (request()->user()->id === $user->id) {
+            return self::withForbidden(self::MESSAGES['cant_change_status']);
+        }
+
         try {
             $user->status = !$user->status;
             $user->save();
-            return self::withOk('User ' . ($user->status ? self::MESSAGES['enable'] : self::MESSAGES['disable']));
+            return self::withOk('User ' . ($user->status ? self::MESSAGES['active'] : self::MESSAGES['inactive']));
         } catch (Exception $e) {
             return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
         }
