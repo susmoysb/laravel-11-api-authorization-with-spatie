@@ -13,6 +13,8 @@ trait ConstantsTrait
         'delete'              => 'deleted successfully.',
         'restore'             => 'restored successfully.',
         'delete_permanently'  => 'deleted permanently.',
+        'enable'              => 'enabled successfully.',
+        'disable'             => 'disabled successfully.',
         'login'               => 'logged in successfully.',
         'logout'              => 'logged out successfully.',
         'invalid_credentials' => 'Invalid credentials.',

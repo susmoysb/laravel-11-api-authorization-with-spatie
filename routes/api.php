@@ -27,10 +27,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::controller(UserController::class)->prefix('users')->group(function () {
-        Route::get('/me', 'me');
-        Route::patch('/change-password', 'changePassword');
-        Route::post('/{user}/restore', 'restore');
-        Route::delete('/{user}/delete-permanently', 'forceDestroy');
+        Route::get('me', 'me');
+        Route::patch('change-password', 'changePassword');
+        Route::post('{user}/restore', 'restore');
+        Route::delete('{user}/delete-permanently', 'forceDestroy');
+        Route::patch('{user}/change-status', 'changeStatus');
     });
     Route::apiResource('users', UserController::class);
 });

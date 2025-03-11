@@ -32,6 +32,7 @@ class UserController extends Controller implements HasMiddleware
             new Middleware('permission:' . self::PERMISSIONS['own_profile']['password_change'], only: ['changePassword']),
             new Middleware('permission:' . self::PERMISSIONS['user']['restore'], only: ['restore']),
             new Middleware('permission:' . self::PERMISSIONS['user']['delete_permanently'], only: ['forceDestroy']),
+            new Middleware('permission:' . self::PERMISSIONS['user']['status_change'], only: ['changeStatus']),
         ];
     }
 
@@ -265,5 +266,29 @@ class UserController extends Controller implements HasMiddleware
         }
 
         return self::withBadRequest(self::MESSAGES['system_error']);
+    }
+
+    /**
+     * Change the status of the specified user.
+     *
+     * This method handles the request to change the status of a user.
+     * The status change process toggles the user's status between enabled and disabled.
+     * It validates the incoming request data and returns a JSON response.
+     *
+     * @param \App\Models\User $user The user instance to update.
+     *
+     * @return \Illuminate\Http\JsonResponse A JSON response indicating the result of the operation.
+     *
+     * @throws \Exception If an error occurs during the status change process.
+     */
+    public function changeStatus(User $user): JsonResponse
+    {
+        try {
+            $user->status = !$user->status;
+            $user->save();
+            return self::withOk('User ' . ($user->status ? self::MESSAGES['enable'] : self::MESSAGES['disable']));
+        } catch (Exception $e) {
+            return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
+        }
     }
 }
