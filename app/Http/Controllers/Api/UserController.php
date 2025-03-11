@@ -31,6 +31,7 @@ class UserController extends Controller implements HasMiddleware
             new Middleware('permission:' . self::PERMISSIONS['own_profile']['read'], only: ['me']),
             new Middleware('permission:' . self::PERMISSIONS['own_profile']['password_change'], only: ['changePassword']),
             new Middleware('permission:' . self::PERMISSIONS['user']['restore'], only: ['restore']),
+            new Middleware('permission:' . self::PERMISSIONS['user']['delete_permanently'], only: ['forceDestroy']),
         ];
     }
 
@@ -238,6 +239,29 @@ class UserController extends Controller implements HasMiddleware
     {
         if ($user->trashed() && $user->restore()) {
             return self::withOk('User ' . self::MESSAGES['restore']);
+        }
+
+        return self::withBadRequest(self::MESSAGES['system_error']);
+    }
+
+    /**
+     * Permanently remove the specified user from storage.
+     *
+     * This method handles the request to permanently delete a user from the database.
+     * Authenticated users can permanently delete other users' profiles based on their permissions.
+     * In order to permanently delete a user, the user must be soft deleted first.
+     * It returns a JSON response indicating the result of the operation.
+     *
+     * @param \App\Models\User $user The user instance to permanently delete.
+     *
+     * @return \Illuminate\Http\JsonResponse A JSON response indicating the result of the operation.
+     *
+     * @throws \Exception If an error occurs during the user deletion process.
+     */
+    public function forceDestroy(User $user): JsonResponse
+    {
+        if ($user->trashed() && $user->forceDelete()) {
+            return self::withOk('User ' . self::MESSAGES['delete_permanently']);
         }
 
         return self::withBadRequest(self::MESSAGES['system_error']);

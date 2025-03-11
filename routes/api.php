@@ -30,6 +30,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/me', 'me');
         Route::patch('/change-password', 'changePassword');
         Route::post('/{user}/restore', 'restore');
+        Route::delete('/{user}/delete-permanently', 'forceDestroy');
     });
     Route::apiResource('users', UserController::class);
 });
