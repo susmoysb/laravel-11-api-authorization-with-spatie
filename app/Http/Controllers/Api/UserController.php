@@ -33,6 +33,7 @@ class UserController extends Controller implements HasMiddleware
             new Middleware('permission:' . self::PERMISSIONS['user']['restore'], only: ['restore']),
             new Middleware('permission:' . self::PERMISSIONS['user']['delete_permanently'], only: ['forceDestroy']),
             new Middleware('permission:' . self::PERMISSIONS['user']['status_change'], only: ['changeStatus']),
+            new Middleware('permission:' . self::PERMISSIONS['user']['password_reset'], only: ['resetPassword']),
         ];
     }
 
@@ -188,7 +189,7 @@ class UserController extends Controller implements HasMiddleware
 
         try {
             $user->update(['password' => Hash::make($validatedData['new_password'])]);
-            return self::withOk('Password ' . self::MESSAGES['update']);
+            return self::withOk('Password ' . self::MESSAGES['change']);
         } catch (Exception $e) {
             return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
         }
@@ -272,7 +273,7 @@ class UserController extends Controller implements HasMiddleware
      * Change the status of the specified user.
      *
      * This method handles the request to change the status of a user.
-     * The status change process toggles the user's status between enabled and disabled.
+     * Authenticated users can change the status of other users based on their permissions.
      * It validates the incoming request data and returns a JSON response.
      *
      * @param \App\Models\User $user The user instance to update.
@@ -291,6 +292,41 @@ class UserController extends Controller implements HasMiddleware
             $user->status = !$user->status;
             $user->save();
             return self::withOk('User ' . ($user->status ? self::MESSAGES['active'] : self::MESSAGES['inactive']));
+        } catch (Exception $e) {
+            return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
+        }
+    }
+
+    /**
+     * Reset the specified user's password.
+     *
+     * This method handles the request to reset a user's password.
+     * Authenticated users can reset other users' passwords based on their permissions.
+     * It validates the incoming request data and returns a JSON response.
+     *
+     * @param \Illuminate\Http\Request $request The incoming request containing the new password.
+     * @param \App\Models\User $user The user instance whose password is to be reset.
+     *
+     * @return \Illuminate\Http\JsonResponse A JSON response indicating the result of the operation.
+     *
+     * @throws \Illuminate\Validation\ValidationException If the request data fails validation.
+     * @throws \Exception If an error occurs during the password reset process.
+     */
+    public function resetPassword(Request $request, User $user): JsonResponse
+    {
+        if ($request->user()->id === $user->id) {
+            return self::withForbidden(self::MESSAGES['cant_reset_password']);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $validatedData = $validator->validated();
+
+        try {
+            $user->update(['password' => Hash::make($validatedData['new_password'])]);
+            return self::withOk('Password ' . self::MESSAGES['reset']);
         } catch (Exception $e) {
             return self::withBadRequest(self::MESSAGES['system_error'], $e->getMessage() . ' ' . get_class($e));
         }

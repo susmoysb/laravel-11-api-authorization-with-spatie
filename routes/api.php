@@ -32,6 +32,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('{user}/restore', 'restore');
         Route::delete('{user}/delete-permanently', 'forceDestroy');
         Route::patch('{user}/change-status', 'changeStatus');
+        Route::post('{user}/reset-password', 'resetPassword');
     });
     Route::apiResource('users', UserController::class);
 });
