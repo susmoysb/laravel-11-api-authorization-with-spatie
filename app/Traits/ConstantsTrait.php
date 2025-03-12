@@ -6,6 +6,7 @@ trait ConstantsTrait
 {
     public const MESSAGES = [
         'accept_header_error' => "Accept header must be 'application/json'.",
+        'too_many_requests'   => 'Too many attempts. Please try again after some time.',
         'validation_error'    => 'Validation Error.',
         'register'            => 'registered successfully.',
         'store'               => 'stored successfully.',

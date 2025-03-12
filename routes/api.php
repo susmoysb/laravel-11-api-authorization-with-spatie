@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::controller(AuthController::class)->group(function () {
     Route::post('register', 'register');
-    Route::post('login', 'login');
+    Route::post('login', 'login')->middleware('throttle:' . env('RATE_LIMIT', 10) . ',' . env('RATE_LIMIT_TIME', 1));
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {

@@ -18,7 +18,7 @@ class ApiResponse
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    private static function response(string $status, $data = null, string $message = null, int $statusCode = 200, array $additionalData = [], string $dataKey = 'data'): JsonResponse
+    private static function response(string $status, $data = null, ?string $message = null, int $statusCode = 200, array $additionalData = [], string $dataKey = 'data'): JsonResponse
     {
         $response = array_merge([
             'status' => $status,
@@ -37,7 +37,7 @@ class ApiResponse
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function withOk(string $message = null, $data = null): JsonResponse
+    public static function withOk(?string $message = null, $data = null): JsonResponse
     {
         return self::response('OK', $data, $message, 200);
     }
@@ -50,7 +50,7 @@ class ApiResponse
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function withCreated(string $message = null, $data = null): JsonResponse
+    public static function withCreated(?string $message = null, $data = null): JsonResponse
     {
         return self::response('Created', $data, $message, 201);
     }
@@ -63,7 +63,7 @@ class ApiResponse
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function withNoContent(string $message = null, $data = null): JsonResponse
+    public static function withNoContent(?string $message = null, $data = null): JsonResponse
     {
         return self::response('No Content', $data, $message, 204);
     }
@@ -76,7 +76,7 @@ class ApiResponse
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function withBadRequest(string $message = null, $data = null): JsonResponse
+    public static function withBadRequest(?string $message = null, $data = null): JsonResponse
     {
         return self::response('Bad Request', $data, $message, 400);
     }
@@ -89,7 +89,7 @@ class ApiResponse
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function withUnauthorized(string $message = null, $data = null): JsonResponse
+    public static function withUnauthorized(?string $message = null, $data = null): JsonResponse
     {
         return self::response('Unauthorized', $data, $message, 401);
     }
@@ -102,7 +102,7 @@ class ApiResponse
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function withForbidden(string $message = null, $data = null): JsonResponse
+    public static function withForbidden(?string $message = null, $data = null): JsonResponse
     {
         return self::response('Forbidden', $data, $message, 403);
     }
@@ -115,7 +115,7 @@ class ApiResponse
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function withNotFound(string $message = null, $data = null): JsonResponse
+    public static function withNotFound(?string $message = null, $data = null): JsonResponse
     {
         return self::response('Not Found', $data, $message, 404);
     }
@@ -128,7 +128,7 @@ class ApiResponse
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function withNotAcceptable(string $message = null, $data = null): JsonResponse
+    public static function withNotAcceptable(?string $message = null, $data = null): JsonResponse
     {
         return self::response('Not Acceptable', $data, $message, 406);
     }
@@ -141,7 +141,7 @@ class ApiResponse
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function withConflict(string $message = null, $data = null): JsonResponse
+    public static function withConflict(?string $message = null, $data = null): JsonResponse
     {
         return self::response('Conflict', $data, $message, 409);
     }
@@ -154,9 +154,22 @@ class ApiResponse
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function withUnprocessableContent(string $message = null, $errors = []): JsonResponse
+    public static function withUnprocessableContent(?string $message = null, $errors = []): JsonResponse
     {
         return self::response('Unprocessable Content', $errors, $message, 422, [], 'errors');
+    }
+
+    /**
+     * 429 Too Many Requests
+     *
+     * @param string $message
+     * @param mixed $data
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public static function withTooManyRequests(?string $message = null, $data = null): JsonResponse
+    {
+        return self::response('Too Many Requests', $data, $message, 429);
     }
 
     /**
@@ -167,7 +180,7 @@ class ApiResponse
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function withInternalServerError(string $message = null, $data = null): JsonResponse
+    public static function withInternalServerError(?string $message = null, $data = null): JsonResponse
     {
         return self::response('Internal Server Error', $data, $message, 500);
     }
@@ -180,7 +193,7 @@ class ApiResponse
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function withServiceUnavailable(string $message = null, $data = null): JsonResponse
+    public static function withServiceUnavailable(?string $message = null, $data = null): JsonResponse
     {
         return self::response('Service Unavailable', $data, $message, 503);
     }

@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureTokenIsValid;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Exceptions\UnauthorizedException;
@@ -37,6 +38,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 if ($exception instanceof UnauthorizedException) {
                     return ApiResponse::withForbidden(BaseClass::MESSAGES['no_permission']);
+                }
+
+                if ($exception instanceof ThrottleRequestsException) {
+                    return ApiResponse::withTooManyRequests(BaseClass::MESSAGES['too_many_requests']);
                 }
 
                 return ApiResponse::withInternalServerError($exception->getMessage(), get_class($exception));
