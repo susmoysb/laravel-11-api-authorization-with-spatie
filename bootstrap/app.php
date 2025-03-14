@@ -3,6 +3,7 @@
 use App\Classes\ApiResponse;
 use App\Classes\BaseClass;
 use App\Http\Middleware\EnsureTokenIsValid;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -31,6 +32,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (Exception $exception, Request $request) {
             if ($request->is('api/*')) {
+
+                if (($previous = $exception->getPrevious()) instanceof ModelNotFoundException) {
+                    $modelClass = method_exists($previous, 'getModel') ? class_basename($previous->getModel()) : 'Resource';
+                    return ApiResponse::withNotFound($modelClass . ' ' . BaseClass::MESSAGES['not_found']);
+                }
 
                 if ($exception instanceof ValidationException) {
                     return ApiResponse::withUnprocessableContent(BaseClass::MESSAGES['validation_error'], $exception->validator->errors());
